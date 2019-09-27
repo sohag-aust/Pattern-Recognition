@@ -1,0 +1,1 @@
+Here are some Pattern Recognition algorithm.. Firstly these algorithms work on test data. and then classify/train something from train data.
