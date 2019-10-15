@@ -9,89 +9,147 @@ df = pd.read_csv('data.txt', sep=" ", header=None, dtype='float')
 data1 = df.values
 
 data = []
+data2 = []
 
 for a1, b1 in data1:
     a = round(a1, 5)
     b = round(b1, 5)
     data.append((a, b))
+    data2.append((a, b, 0))
 
 sz = len(data)
-k = 2
+k = int(input('Enter no. of cluster: '))
 
 rand = random.sample(range(0, sz), k)
+cent = []
 
-cent1 = data[rand[0]]
-cent2 = data[rand[1]]
+for i in range(0, k):
+    cent.append(data[rand[i]])
+    '''cent.append(data[i])'''
 
-a = cent1[0]; b = cent1[1]
-a1 = cent2[0]; b1 = cent2[1]
+'''cent.append(data[0])'''
+'''cent.append(data[3])'''
 
-cls1_cnt = 0; cls2_cnt = 0
 cls1_x = []
 cls1_y = []
 cls2_x = []
 cls2_y = []
 
+def find_cluster(p, q, s, t):
+    dis = ((p-s) * (p-s)) + ((q-t) * (q-t))
+    dis = math.sqrt(dis)
+    return dis
+
+def find_min(result):
+    res = sorted(result, key=itemgetter(1))
+    return res
+
+prev_cnt = []
+
 while(True):
     temp_table = []
-    cent1_x = 0; cent1_y = 0
-    cent2_x = 0; cent2_y = 0
     cls = []
+
+    my_dict = {}
+    for i in range(0, k):
+        my_dict[i] = [0, 0, 0]
+
+    '''print('my dict: ')
+    print(my_dict)'''
 
     for i, j in data:
         x = i
         y = j
 
-        dist1 = ((x-a) * (x-a)) + ((y-b) * (y-b))
-        dist1 = math.sqrt(dist1)
+        result = []
+        for d in range(0, k):
+            temp_cent = cent[d]
+            a2 = temp_cent[0]
+            b2 = temp_cent[1]
+            dist = find_cluster(x, y, a2, b2)
+            result.append((d, dist))
 
-        dist2 = ((x-a1) * (x-a1)) + ((y-b1) * (y-b1))
-        dist2 = math.sqrt(dist2)
+        result = find_min(result)
+        temp_data = []
+        for d in range(0, k):
+            r = result[d]
+            temp_data.append(r[1])
 
-        if dist1 <= dist2:
-            temp_table.append((dist1, dist2, 1))
-            cent1_x = cent1_x + x
-            cent1_y = cent1_y + y
-            cls.append(1)
+        ind_l = result[0]
+        ind = ind_l[0]
+        cls.append(ind+1)
+        temp_data.append(ind+1)
+        temp_table.append(temp_data)
 
-        else:
-            temp_table.append((dist1, dist2, 2))
-            cent2_x = cent2_x + x
-            cent2_y = cent2_y + y
-            cls.append(2)
+        for d in range(0, k):
+            temp_dict = my_dict[d]
 
-    ncls1_cnt = cls.count(1)
-    ncls2_cnt = cls.count(2)
+            if d == ind:
+                temp_dict[0] = temp_dict[0] + x
+                temp_dict[1] = temp_dict[1] + y
+                temp_dict[2] = temp_dict[2] + 1
+                my_dict[d] = temp_dict
 
-    if (ncls1_cnt == cls1_cnt) and (ncls2_cnt == cls2_cnt):
+    '''print('My dict: ')
+    print(my_dict)
 
-        for i in range(0, sz):
-            cl = temp_table[i]
-            c = cl[2]
-            temp = data[i]
-            m = temp[0]
-            n = temp[1]
-            if c == 1:
-                cls1_x.append(m)
-                cls1_y.append(n)
-            else:
-                cls2_x.append(m)
-                cls2_y.append(n)
+    print('My table: ')
+    print(temp_table)
 
+    print('count: ')
+    print(cls)'''
+
+    new_cnt = []
+    for d in range(0, k):
+        new_cnt.append(cls.count(d+1))
+
+    '''print('prev count: ', prev_cnt)
+    print('new count: ', new_cnt)'''
+
+    if prev_cnt == new_cnt:
         break
 
     else:
-        a = cent1_x/ncls1_cnt; b = cent1_y/ncls1_cnt
-        a1 = cent2_x/ncls2_cnt; b1 = cent2_y/ncls2_cnt
-        cls1_cnt = ncls1_cnt
-        cls2_cnt = ncls2_cnt
+        temp_cent1 = []
+
+        for d in range(0, k):
+            temp_dict1 = my_dict[d]
+            a = temp_dict1[0]
+            b = temp_dict1[1]
+            c = temp_dict1[2]
+            temp_cent1.append((a/c, b/c))
+
+        cent = temp_cent1
+        prev_cnt.clear()
+        prev_cnt = new_cnt
+
+
+Title = 'K_Means Clustering For Cluster size = '
+Title = Title + str(k)
 
 plt.figure(figsize=(10, 10))
-plt.title('K_MEAN CLUSTERING', color='red')
-plt.xlabel('x-axis', color='red')
-plt.ylabel('y-axis', color='red')
+plt.title(Title, color='red', fontweight="bold")
+plt.xlabel('x-axis', color='red', fontweight="bold")
+plt.ylabel('y-axis', color='red', fontweight="bold")
 
-plt.scatter(cls1_x, cls1_y, color='red', marker='.', label='Class - 1.')
-plt.scatter(cls2_x, cls2_y, color='green', marker='.', label='Class - 2.')
+colors = ['', 'red', '#128117', '#611302', '#7905d9', '#ec05b8', 'yellow', '#05ec9f']
+markers = ['', '8', 'p', 'h', 'X', 's', 'o', 'D']
+
+ok = []
+for i in range(0, k+1):
+    ok.append(0)
+
+for i in range(0, sz):
+    temp_print = data[i]
+
+    if ok[cls[i]] == 0:
+        labels = 'Class - '
+        labels = labels + str(cls[i])
+        plt.scatter(temp_print[0], temp_print[1], color=colors[cls[i]], marker=markers[cls[i]], label=labels)
+        ok[cls[i]] = 1
+    else:
+        plt.scatter(temp_print[0], temp_print[1], color=colors[cls[i]], marker=markers[cls[i]])
+
+
 plt.legend()
 plt.show()
